@@ -1,0 +1,135 @@
+// User & Auth Module
+Table users {
+  id UUID [pk]
+  phone VARCHAR(20) [unique, not null]
+  email VARCHAR(255)
+  password_hash VARCHAR(255)
+  name VARCHAR(100) [not null]
+  role VARCHAR(20) [note: 'CUSTOMER, CLEANER, ADMIN']
+  status VARCHAR(20) [default: 'ACTIVE', note: 'ACTIVE, SUSPENDED, PENDING_VERIFICATION']
+  created_at TIMESTAMPTZ [default: `now()`]
+  updated_at TIMESTAMPTZ [default: `now()`]
+}
+
+Table cleaner_profiles {
+  id UUID [pk]
+  user_id UUID [ref: - users.id, not null]
+  cleaner_type VARCHAR(20) [note: 'INDIVIDUAL, AGENCY']
+  business_name VARCHAR(150)
+  tax_id VARCHAR(20)
+  id_card_encrypted TEXT
+  police_record_url TEXT
+  service_radius_km INT [default: 10]
+  service_location GEOMETRY(Point, 4326)
+  avg_rating DECIMAL(3, 2) [default: 5.00]
+  total_orders_completed INT [default: 0]
+  verified_status VARCHAR(20) [default: 'UNVERIFIED', note: 'UNVERIFIED, UNDER_REVIEW, VERIFIED, REJECTED']
+}
+
+Table agency_staff {
+  id UUID [pk]
+  agency_id UUID [ref: > cleaner_profiles.id, not null]
+  staff_user_id UUID [ref: > users.id, not null]
+  role_in_agency VARCHAR(20) [default: 'WORKER', note: 'MANAGER, WORKER']
+  status VARCHAR(20) [default: 'ACTIVE']
+}
+
+// Location & Scheduling
+Table customer_addresses {
+  id UUID [pk]
+  user_id UUID [ref: > users.id, not null]
+  category VARCHAR(20) [note: 'RESIDENTIAL, OFFICE']
+  contact_name VARCHAR(100)
+  contact_phone VARCHAR(20)
+  city VARCHAR(50)
+  district VARCHAR(50)
+  street_address VARCHAR(255)
+  building_has_elevator BOOLEAN [default: true]
+  parking_info VARCHAR(100)
+  geo_location GEOMETRY(Point, 4326)
+}
+
+Table cleaner_schedules {
+  id UUID [pk]
+  cleaner_id UUID [ref: > cleaner_profiles.id, not null]
+  start_time TIMESTAMPTZ [not null]
+  end_time TIMESTAMPTZ [not null]
+  status VARCHAR(20) [default: 'AVAILABLE', note: 'AVAILABLE, BOOKED, UNAVAILABLE']
+  order_id UUID
+}
+
+// Orders & Bidding
+Table orders {
+  id UUID [pk]
+  order_no VARCHAR(32) [unique, not null]
+  customer_id UUID [ref: > users.id, not null]
+  cleaner_id UUID [ref: > cleaner_profiles.id]
+  assigned_staff_id UUID [ref: > users.id]
+  address_id UUID [ref: > customer_addresses.id, not null]
+  booking_type VARCHAR(20) [note: 'INSTANT_FIXED, CUSTOM_BIDDING']
+  service_type VARCHAR(20) [note: 'HOME_GENERAL, DEEP_CLEAN, OFFICE, MOVE_IN_OUT']
+  space_size_ping INT
+  scheduled_start_at TIMESTAMPTZ [not null]
+  estimated_duration_hours DECIMAL(3, 1)
+  total_amount DECIMAL(10, 2)
+  platform_fee DECIMAL(10, 2)
+  cleaner_payout DECIMAL(10, 2)
+  status VARCHAR(30) [default: 'PENDING_MATCH']
+  created_at TIMESTAMPTZ [default: `now()`]
+}
+
+Table order_items {
+  id UUID [pk]
+  order_id UUID [ref: > orders.id, not null]
+  item_name VARCHAR(100) [not null]
+  quantity INT [default: 1]
+  unit_price DECIMAL(10, 2) [not null]
+  subtotal DECIMAL(10, 2) [not null]
+}
+
+Table quotation_bids {
+  id UUID [pk]
+  order_id UUID [ref: > orders.id, not null]
+  cleaner_id UUID [ref: > cleaner_profiles.id, not null]
+  bid_amount DECIMAL(10, 2) [not null]
+  proposed_duration_hours DECIMAL(3, 1)
+  notes TEXT
+  status VARCHAR(20) [default: 'PENDING', note: 'PENDING, ACCEPTED, REJECTED, EXPIRED']
+  created_at TIMESTAMPTZ [default: `now()`]
+}
+
+// Proof & Payments
+Table payments {
+  id UUID [pk]
+  order_id UUID [ref: > orders.id, not null]
+  payment_gateway VARCHAR(30)
+  gateway_transaction_id VARCHAR(100)
+  auth_amount DECIMAL(10, 2)
+  captured_amount DECIMAL(10, 2)
+  status VARCHAR(20) [note: 'AUTHORIZED, PAID, REFUNDED, FAILED']
+  invoice_number VARCHAR(50)
+  created_at TIMESTAMPTZ [default: `now()`]
+}
+
+Table service_proof_photos {
+  id UUID [pk]
+  order_id UUID [ref: > orders.id, not null]
+  photo_phase VARCHAR(20) [note: 'BEFORE_CLEANING, AFTER_CLEANING']
+  area_tag VARCHAR(50)
+  photo_url TEXT [not null]
+  captured_lat_lng GEOMETRY(Point, 4326)
+  client_signed_url TEXT
+  created_at TIMESTAMPTZ [default: `now()`]
+}
+
+Table reviews {
+  id UUID [pk]
+  order_id UUID [ref: > orders.id, not null]
+  reviewer_id UUID [ref: > users.id, not null]
+  reviewee_id UUID [ref: > users.id, not null]
+  rating SMALLINT [note: '1 to 5']
+  punctuality_score SMALLINT
+  cleanliness_score SMALLINT
+  comment TEXT
+  created_at TIMESTAMPTZ [default: `now()`]
+}
