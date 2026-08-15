@@ -23,13 +23,13 @@ services:
     depends_on:
       - backend
 
-  # Shared Sync Database & API Server
+  # Shared Sync Database & API Server (Internal exposure only to prevent host port conflict)
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
     volumes:
       - sqlite-data:/app
     restart: always
