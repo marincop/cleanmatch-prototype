@@ -6,7 +6,15 @@ import CleanerDashboard from './components/CleanerDashboard';
 import AdminDashboard from './components/AdminDashboard';
 
 export default function App() {
-  const entrance = import.meta.env.VITE_ENTRANCE || 'CUSTOMER';
+  const getEntrance = () => {
+    if (import.meta.env.VITE_ENTRANCE) return import.meta.env.VITE_ENTRANCE;
+    const port = window.location.port;
+    if (port === '5174' || window.location.pathname.includes('cleaner')) {
+      return 'CLEANER';
+    }
+    return 'CUSTOMER';
+  };
+  const entrance = getEntrance();
   const params = new URLSearchParams(window.location.search);
   const isDevMode = params.get('dev') === 'true' || params.get('admin') === 'true';
 
@@ -23,10 +31,18 @@ export default function App() {
 
   const lastFetchedDbRef = useRef('');
 
+  const getApiUrl = (path) => {
+    const port = window.location.port;
+    if (port && (port.startsWith('51') || port.startsWith('52') || port === '3000')) {
+      return `http://localhost:8080${path}`;
+    }
+    return path;
+  };
+
   // 1. Polling database state from Python FastAPI sync server
   useEffect(() => {
     const loadDB = () => {
-      fetch('http://localhost:8080/api/v1/sync/db')
+      fetch(getApiUrl('/api/v1/sync/db'))
         .then(r => r.json())
         .then(data => {
           if (data && data.users) {
@@ -52,7 +68,7 @@ export default function App() {
 
     const timer = setTimeout(() => {
       lastFetchedDbRef.current = dbStr;
-      fetch('http://localhost:8080/api/v1/sync/db', {
+      fetch(getApiUrl('/api/v1/sync/db'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(db)

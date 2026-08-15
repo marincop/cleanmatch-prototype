@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # Entrance 1: Customer App
+  frontend-customer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80"
+    restart: always
+    depends_on:
+      - backend
+
+  # Entrance 2: Cleaner & Company App
+  frontend-cleaner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5174:80"
+    restart: always
+    depends_on:
+      - backend
+
+  # Shared Sync Database & API Server
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - sqlite-data:/app
+    restart: always
+
+volumes:
+  sqlite-data:
