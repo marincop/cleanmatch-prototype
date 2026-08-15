@@ -7,7 +7,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "5173:80"
+      - "5175:80"
     restart: always
     depends_on:
       - backend
@@ -18,7 +18,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "5174:80"
+      - "5176:80"
     restart: always
     depends_on:
       - backend

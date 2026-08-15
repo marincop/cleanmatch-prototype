@@ -9,7 +9,7 @@ export default function App() {
   const getEntrance = () => {
     if (import.meta.env.VITE_ENTRANCE) return import.meta.env.VITE_ENTRANCE;
     const port = window.location.port;
-    if (port === '5174' || window.location.pathname.includes('cleaner')) {
+    if (port === '5174' || port === '5176' || port === '5200' || port === '5202' || window.location.pathname.includes('cleaner')) {
       return 'CLEANER';
     }
     return 'CUSTOMER';
