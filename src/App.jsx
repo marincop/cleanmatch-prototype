@@ -345,10 +345,15 @@ export default function App() {
       alert('請輸入手機號碼');
       return;
     }
-    // Verify if phone is registered in db.users
-    const userExists = db.users.find(u => u.phone === phone);
+    // Verify if phone is registered in db.users for the current entrance role
+    const userExists = db.users.find(u => u.phone === phone && (u.role === (entrance === 'CUSTOMER' ? 'CUSTOMER' : 'CLEANER') || u.role === 'ADMIN'));
     if (!userExists) {
-      alert('此手機號碼尚未註冊！請切換至「新會員註冊」建立帳戶。');
+      const oppositeRoleUser = db.users.find(u => u.phone === phone);
+      if (oppositeRoleUser) {
+        alert(`此手機號碼在目前入口未註冊身分！\n\n您在系統中擁有「${oppositeRoleUser.role === 'CLEANER' ? '服務商/清潔人員' : '案主/客戶'}」身分，請移至對應的入口（Port ${oppositeRoleUser.role === 'CLEANER' ? '5176' : '5175'}）進行登入！`);
+      } else {
+        alert('此手機號碼尚未註冊！請切換至「新會員註冊」建立帳戶。');
+      }
       return;
     }
     setOtpSent(true);
@@ -361,7 +366,7 @@ export default function App() {
       alert('簡訊驗證碼錯誤！請輸入 123456');
       return;
     }
-    const user = db.users.find(u => u.phone === phone);
+    const user = db.users.find(u => u.phone === phone && (u.role === (entrance === 'CUSTOMER' ? 'CUSTOMER' : 'CLEANER') || u.role === 'ADMIN'));
     if (!user) {
       alert('登入失敗，找不到該用戶');
       return;
@@ -369,11 +374,11 @@ export default function App() {
 
     // Entrance role validation
     if (entrance === 'CUSTOMER' && user.role !== 'CUSTOMER') {
-      alert(`登入失敗！此入口僅限「案主/客戶」登入。\n\n您是「${user.role === 'CLEANER' ? '服務商/清潔人員' : '管理員'}」身分，請移至清潔端入口 (Port 5174) 登入！`);
+      alert(`登入失敗！此入口僅限「案主/客戶」登入。\n\n您是「${user.role === 'CLEANER' ? '服務商/清潔人員' : '管理員'}」身分，請移至清潔端入口 (Port 5176) 登入！`);
       return;
     }
     if (entrance === 'CLEANER' && user.role !== 'CLEANER') {
-      alert(`登入失敗！此入口僅限「清潔服務員/公司」登入。\n\n您是「客戶/案主」身分，請移至客戶端入口 (Port 5173) 登入！`);
+      alert(`登入失敗！此入口僅限「清潔服務員/公司」登入。\n\n您是「客戶/案主」身分，請移至客戶端入口 (Port 5175) 登入！`);
       return;
     }
     
